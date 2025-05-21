@@ -1,0 +1,523 @@
+import time
+import random
+import pandas as pd  # For working with DataFrames and Excel files
+
+# Initialize a dictionary to store user data
+user_data = {}
+user_count = 0
+
+# Define fitness tasks globally to avoid repetition
+UNDERWEIGHT_WEEKLY_TASKS = [
+    "DAY 1: FULL BODY STRENGTH = 1. Squats (3x12), 2. Push-ups (3x10), 3. Bent-over Rows (3x12), 4. Shoulder Press (3x10), 5. Planks (3x45sec)",
+    "DAY 2: UPPER BODY (Chest, Arms, Back) = 1. Bench press (3x10), 2. Bicep Curls (3x12), 3. Pull-ups (3x8), 4. Dips (3x10), 5. Triceps Extensions (3x12)",
+    "DAY 3: LOWER BODY AND CORE = 1. Deadlifts (3x10), 2. Lunges (3x12), 3. Leg press (3x10), 4. Calf Raises (3x15), 5. Hanging leg Raises (3x12)",
+    "DAY 4: ACTIVE RECOVERY (LIGHT CARDIO AND MOBILITY) = 1. Yoga or stretching (20 min), 2. Walking or light jogging (20 min), 3. Core stability work (planks, side planks)",
+    "DAY 5: PUSH & PULL DAY (Chest, Back, Shoulders) = 1. Push-ups (3x12), 2. Lat pulldown (3x12), 3. Dumbbell shoulder press (3x10), 4. Barbell Rows (3x10), 5. Russian Twist (3x20)",
+    "DAY 6: LEGS & GLUTES",
+    "DAY 7: FULL BODY STRENGTH = 1. Squats (3x12), 2. Push-ups (3x10), 3. Bent-over Rows (3x12), 4. Shoulder Press (3x10), 5. Planks (3x45sec)",
+]
+
+COMMON_MONTHLY_TASKS = [
+    "DAY 1:Full Body Strength\n\t\t\tSquats: 3 sets of 12 repetitions\n\t\t\tPush-ups: 3 sets of 10 repetitions\n\t\t\tBent-over Rows: 3 sets of 12 repetitions\n\t\t\tShoulder Press: 3 sets of 10 repetitions\n\t\t\tPlank: 3 sets of 45 seconds hold",
+    "DAY 2:Upper Body (Chest, Arms, Back)\n\t\tBench Press: 3 sets of 10 repetitions\n\t\tBicep Curls: 3 sets of 12 repetitions\n\t\tPull-ups: 3 sets of as many repetitions as possible (AMRAP)\n\t\tDips: 3 sets of 10 repetitions\n\t\tTriceps Extensions: 3 sets of 12 repetitions",
+    "DAY 3:Lower Body and Core\n\t\tDeadlifts: 3 sets of 10 repetitions\n\t\tLunges: 3 sets of 12 repetitions per leg\n\t\tLeg Press: 3 sets of 10 repetitions\n\t\tCalf Raises: 3 sets of 15 repetitions\n\t\tHanging Leg Raises: 3 sets of 12 repetitions",
+    "DAY 4:Active Recovery\n\t\tYoga or stretching: 20 minutes\n\t\tWalking or light jogging: 20 minutes\n\t\tCore stability work (planks, side planks): 15 minutes",
+    "DAY 5:Push & Pull (Chest, Back, Shoulders)\n\t\t\tPush-ups: 3 sets of 12 repetitions\n\t\t\tLat Pulldown: 3 sets of 12 repetitions\n\t\t\tDumbbell Shoulder Press: 3 sets of 10 repetitio\n\t\t\tBarbell Rows: 3 sets of 10 repetitions\n\t\t\tRussian Twist: 3 sets of 20 repetitions per side",
+    "DAY 6:Legs & Glutes",
+    "DAY 7:Full Body Strength = 1. Squats (3x12), 2. Push-ups (3x10), 3. Bent-over Rows (3x12), 4. Shoulder Press (3x10), 5. Planks (3x45sec)",
+    "DAY 8: 30 sec of jump lunges, 30 sec of mountain climbers, 30 sec of squat jumps, 30 sec of rest, (repeat for a total of 4 to 5 rounds)",
+    "DAY 9: Yoga, pilates or a dedicated stretching routine for 30 mins focus on enhance flexibility, promote recovery and reduce muscle soreness.",
+    "DAY 10: Low intensity activities such as long walk, light cycling or a guided mobility session for 30 mins. Focus on improve blood flow",
+    "DAY 11: FULL BODY STRENGTH = 1. Squats (3x12), 2. Push-ups (3x10), 3. Bent-over Rows (3x12), 4. Shoulder Press (3x10), 5. Planks (3x45sec)",
+    "DAY 12: UPPER BODY (Chest, Arms, Back) = 1. Bench press (3x10), 2. Bicep Curls (3x12), 3. Pull-ups (3x8), 4. Dips (3x10), 5. Triceps Extensions (3x12)",
+    "DAY 13: LOWER BODY AND CORE = 1. Deadlifts (3x10), 2. Lunges (3x12), 3. Leg press (3x10), 4. Calf Raises (3x15), 5. Hanging leg Raises (3x12)",
+    "DAY 14: ACTIVE RECOVERY (LIGHT CARDIO AND MOBILITY) = 1. Yoga or stretching (20 min), 2. Walking or light jogging (20 min), 3. Core stability work (planks, side planks)",
+    "DAY 15: PUSH & PULL DAY (Chest, Back, Shoulders) = 1. Push-ups (3x12), 2. Lat pulldown (3x12), 3. Dumbbell shoulder press (3x10), 4. Barbell Rows (3x10), 5. Russian Twist (3x20)",
+    "DAY 16: LEGS & GLUTES",
+    "DAY 17: FULL BODY STRENGTH = 1. Squats (3x12), 2. Push-ups (3x10), 3. Bent-over Rows (3x12), 4. Shoulder Press (3x10), 5. Planks (3x45sec)",
+    "DAY 18: 30 sec of jump lunges, 30 sec of mountain climbers, 30 sec of squat jumps, 30 sec of rest, (repeat for a total of 4 to 5 rounds)",
+    "DAY 19: Yoga, pilates or a dedicated stretching routine for 30 mins focus on enhance flexibility, promote recovery and reduce muscle soreness.",
+    "DAY 20: Low intensity activities such as long walk, light cycling or a guided mobility session for 30 mins. Focus on improve blood flow",
+    "DAY 21: FULL BODY STRENGTH = 1. Squats (3x12), 2. Push-ups (3x10), 3. Bent-over Rows (3x12), 4. Shoulder Press (3x10), 5. Planks (3x45sec)",
+    "DAY 22: UPPER BODY (Chest, Arms, Back) = 1. Bench press (3x10), 2. Bicep Curls (3x12), 3. Pull-ups (3x8), 4. Dips (3x10), 5. Triceps Extensions (3x12)",
+    "DAY 23: LOWER BODY AND CORE = 1. Deadlifts (3x10), 2. Lunges (3x12), 3. Leg press (3x10), 4. Calf Raises (3x15), 5. Hanging leg Raises (3x12)",
+    "DAY 24: ACTIVE RECOVERY (LIGHT CARDIO AND MOBILITY) = 1. Yoga or stretching (20 min), 2. Walking or light jogging (20 min), 3. Core stability work (planks, side planks)",
+    "DAY 25: PUSH & PULL DAY (Chest, Back, Shoulders) = 1. Push-ups (3x12), 2. Lat pulldown (3x12), 3. Dumbbell shoulder press (3x10), 4. Barbell Rows (3x10), 5. Russian Twist (3x20)",
+    "DAY 26: LEGS & GLUTES",
+    "DAY 27: FULL BODY STRENGTH = 1. Squats (3x12), 2. Push-ups (3x10), 3. Bent-over Rows (3x12), 4. Shoulder Press (3x10), 5. Planks (3x45sec)",
+    "DAY 28: 30 sec of jump lunges, 30 sec of mountain climbers, 30 sec of squat jumps, 30 sec of rest, (repeat for a total of 4 to 5 rounds)",
+    "DAY 29: Yoga, pilates or a dedicated stretching routine for 30 mins focus on enhance flexibility, promote recovery and reduce muscle soreness.",
+    "DAY 30: Low intensity activities such as long walk, light cycling or a guided mobility session for 30 mins. Focus on improve blood flow",
+]
+
+HEALTHY_WEEKLY_TASKS = [
+    "DAY 1:Do brisk walking, jogging or cycling for 30 minutes to improve cardiovascular health",
+    "DAY 2:3 set of pushups (10-15 reps), squats(3 set of 15 reps), plank(3 round of 30 sec each)",
+    "DAY 3:Alternate between 30 sec of high-intensity exercise(eg.sprinting, jumping) and 30 sec of low intensity recovery(eg. walking) ",
+    "DAY 4:Crunches(3 set of 15), bicycle crunches(3 set of 15)\t\tDo it for around 25-30 minutes",
+    "DAY 5:Yoga or a dedicated stretching routine for 30 minutes. Focus on enhancing flexibility, Support muscle recovery.",
+    "DAY 6:3 set of pushups (10-15 reps), squats(3 set of 15 reps), plank(3 round of 30 sec each)\tFocus on target and strengthen lower body muscle.",
+    "DAY 7:Choose an enjoyable moderate intensity outdoor activity such as hiking, dancing, cycling or swimming.",
+]
+
+OVERWEIGHT_WEEKLY_TASKS = [
+    "DAY 1: Brisk walking for 45 minutes.",
+    "DAY 2: Light strength training (bodyweight exercises) for 30 minutes.",
+    "DAY 3: Cycling for 40 minutes at a moderate pace.",
+    "DAY 4: Rest or active recovery (light stretching).",
+    "DAY 5: Swimming for 30 minutes.",
+    "DAY 6: Circuit training (3 rounds of 5 exercises, 10-12 reps each).",
+    "DAY 7: Long walk or enjoyable physical activity for 60 minutes.",
+]
+
+OVERWEIGHT_MONTHLY_TASKS = [
+    "WEEK 1: Focus on building a consistent cardio routine (30-40 minutes, 3-4 times a week).",
+    "WEEK 2: Introduce light strength training exercises targeting major muscle groups (2 times this week).",
+    "WEEK 3: Increase the duration or intensity of your cardio workouts and maintain strength training.",
+    "WEEK 4: Incorporate more varied activities like yoga or hiking and continue with your regular routine.",
+    "Continue cycling through these weekly focuses for the rest of the month, gradually increasing intensity or duration as you feel comfortable.",
+]
+
+
+def calculate_bmi(height, weight):
+    """Calculates the Body Mass Index."""
+    return weight / (height ** 2)
+
+def conduct_fitness_challenge(user_id, fitness_tasks, total_days, total_points, motivational_quotes):
+    """Handles the core logic for running a fitness challenge."""
+    day = 0
+    points_per_day = 10
+    user_data[user_id]['score'] = 0
+    user_data[user_id]['current_progress'] = 0
+
+    print(f"Welcome to the {total_days}-Day Fitness Challenge!\n")
+
+    while day < total_days:
+        # Display the task for the current day, cycling if tasks list is shorter than total_days
+        print(f"Day {day + 1}/{total_days}: {fitness_tasks[day % len(fitness_tasks)]}")
+        
+        response = input("Did you complete today's task? (yes/no): ").lower()
+        if response == "yes":
+            user_data[user_id]['score'] += points_per_day
+            user_data[user_id]['current_progress'] += points_per_day
+            percent = int((user_data[user_id]['current_progress'] / total_points) * 100)
+            bar = "█" * (percent // 10) + "-" * (10 - (percent // 10))
+            print("Great job! You've earned", points_per_day, "points.")
+            print(f"Total score: {user_data[user_id]['score']} points")
+            print(f"Progress: |{bar}| {percent}%\n")
+            user_data[user_id]['activities'].append(f"Day {day + 1}: Completed task") # Corrected day logging
+            quote = random.choice(motivational_quotes)
+            print("Motivational quote of the day:")
+            print(f'"{quote}"\n')
+            time.sleep(1)
+            day += 1
+        elif response == "no":
+            print("No worries! Don't lose hope. Try again!\n")
+            user_data[user_id]['activities'].append(f"Day {day + 1}: Did not complete task") # Corrected day logging
+            day += 1 # Still increment the day to move through the plan
+        else:
+            print("Invalid Input. Please type yes or no\n")
+
+    print("Congratulations! You have completed the Fitness challenge!")
+    print(f"Your final score is: {user_data[user_id]['score']} points")
+
+
+def follow_plan(user_id):
+    print("You chose to follow our plan.")
+    global user_data  # Use the global user_data dictionary
+
+    bmi = user_data[user_id]['bmi']
+    name = user_data[user_id]['name']
+
+    motivational_quotes_general = [
+        "Push yourself because no one is going to do it for you.",
+        "SUCCESS starts with self-discipline.",
+        "Don't stop until you're proud.",
+        "The journey of a thousand miles begins with a single step.",
+        "Your body can stand almost anything. It's your mind that you have to convince.",
+        "Believe you can and you're halfway there.",
+    ]
+
+    fitness_task = []
+    total_days = 0
+
+    if bmi < 18.5:
+        print(f"{name}, you are underweight!")
+        print("Your goal is to Gain Strength, Improve Stamina, and Build Lean Muscles.")
+        print("......GUIDELINES.......")
+        print("1. Eat More Calories: choose high-calorie, nutritious food (nuts, cheese, eggs, whole grains)")
+        print("2. Eat Frequently: Have 5-6 small meals daily with snacks in between")
+        print("3. Avoid Junk Food: Focus on quality calories, not just sugary or processed foods.")
+        print("4. Include Protein: Add eggs, chicken, lentils, tofu, and dairy for muscle building")
+        print("5. Add Healthy Fats: Consume olive oil, avocado, peanut butter, and seeds")
+        
+        while True:
+            user_input = input("Enter your plan type (WEEK/MONTH): ").lower()
+            if user_input == "week":
+                fitness_task = UNDERWEIGHT_WEEKLY_TASKS
+                total_days = len(fitness_task) # Dynamically set total_days
+                break
+            elif user_input == "month":
+                fitness_task = COMMON_MONTHLY_TASKS
+                total_days = 30 # Fixed for monthly plan expectation
+                break
+            else:
+                print("Invalid selection. Please Choose WEEK or MONTH plan.")
+        
+    elif 18.5 <= bmi <= 24.9:
+        print(f"{name}, you have a healthy weight!")
+        print("Keep up the good work! Maintain your healthy lifestyle.")
+        print("......GUIDELINES.......")
+        print("1. Aim for 150 minute of moderate cardio(like cycling)")
+        print("2. Start each workout day with brief warm-up and end with cool down.")
+        print("3. Aim for 7-9 hours of sleep per night.")
+        print("4. Focus on balanced diet with plenty of fruits,vegetables,lean proteins and whole grains.")
+        print("5. Drink enough water before, during and after the exercise.")
+
+        while True:
+            user_input = input("Enter your plan type (WEEK/MONTH): ").lower()
+            if user_input == "week":
+                fitness_task = HEALTHY_WEEKLY_TASKS
+                total_days = len(fitness_task) # Dynamically set total_days
+                break
+            elif user_input == "month":
+                fitness_task = COMMON_MONTHLY_TASKS
+                total_days = 30 # Fixed for monthly plan expectation
+                break
+            else:
+                print("Invalid selection. Please Choose WEEK or MONTH plan.")
+
+    elif bmi >= 25:
+        print(f"{name}, you are overweight!")
+        print("It's important to focus on a balanced diet and regular exercise.")
+        print("Your goal is to loose weight focus on enhance energy and nutritious eating")
+        print("......GUIDELINES.......")
+        print("1. Focus on portion control and mindful eating.")
+        print("2. Include plenty of fruits, vegetables, and whole grains in your diet.")
+        print("3. Limit sugary drinks and processed foods.")
+        print("4. Aim for at least 30 minutes of moderate-intensity exercise most days of the week.")
+        print("5. Stay hydrated by drinking plenty of water.")
+
+        while True:
+            user_input = input("Enter your plan type (WEEK/MONTH): ").lower()
+            if user_input == "week":
+                fitness_task = OVERWEIGHT_WEEKLY_TASKS
+                total_days = len(fitness_task) # Dynamically set total_days
+                break
+            elif user_input == "month":
+                fitness_task = OVERWEIGHT_MONTHLY_TASKS
+                total_days = 30 # Fixed for monthly plan expectation
+                break
+            else:
+                print("Invalid selection. Please Choose WEEK or MONTH plan.")
+    else:
+        print("BMI category could not be determined. Please check your height and weight inputs.")
+        return
+
+    # Calculate total points dynamically based on actual total_days
+    total_points = total_days * 10
+    conduct_fitness_challenge(user_id, fitness_task, total_days, total_points, motivational_quotes_general)
+
+
+def create_own_plan(user_id):
+    print("You chose to create your own plan.")
+    challenge_name = input("Enter the name of your fitness challenge: ")
+    while True:
+        try:
+            total_days = int(input("Enter the number of days for your challenge: "))
+            if total_days <= 0:
+                print("Please enter a positive number of days.")
+            else:
+                break
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
+
+    fitness_tasks = []
+    for i in range(total_days):
+        task = input(f"Enter your fitness task for Day {i + 1}: ")
+        fitness_tasks.append(task)
+
+    motivational_quotes = [
+        "The best way to predict the future is to create it.",
+        "Strive for progress, not perfection.",
+        "Every step counts.",
+        "You are stronger than you think.",
+        "Small steps lead to big changes."
+    ]
+
+    day = 0
+    points_per_day = 10  # You can adjust points per day as needed
+    total_points = total_days * points_per_day
+    user_data[user_id]['score'] = 0
+    user_data[user_id]['current_progress'] = 0
+    user_data[user_id]['custom_challenge'] = challenge_name
+    user_data[user_id]['custom_tasks'] = fitness_tasks
+
+    print(f"Welcome to your {total_days}-day {challenge_name}!\n")
+
+    while day < total_days:
+        print(f"Day {day + 1}/{total_days}: {fitness_tasks[day]}")
+        days_remaining = total_days - day - 1
+        print(f"{days_remaining} days remaining")
+        response = input("Did you complete today's task? (yes/no): ").lower()
+        if response == "yes":
+            user_data[user_id]['score'] += points_per_day
+            user_data[user_id]['current_progress'] += points_per_day
+            percent = int((user_data[user_id]['current_progress'] / total_points) * 100)
+            bar = "█" * (percent // 10) + "-" * (10 - (percent // 10))
+            print("Great job! You've earned", points_per_day, "points.")
+            print(f"Total score: {user_data[user_id]['score']} points")
+            print(f"Progress: |{bar}| {percent}%\n")
+            user_data[user_id]['activities'].append(f"Day {day + 1}: Completed '{fitness_tasks[day]}'") # Corrected day logging and task reference
+            quote = random.choice(motivational_quotes)
+            print("Motivational quote of the day:")
+            print(f'"{quote}"\n')
+            time.sleep(1)
+            day += 1
+        elif response == "no":
+            print("No worries! Don't lose hope. Try again tomorrow.\n")
+            user_data[user_id]['activities'].append(f"Day {day + 1}: Did not complete '{fitness_tasks[day]}'") # Corrected day logging
+            day += 1
+        else:
+            print("Invalid input. Please enter 'yes' or 'no'.\n")
+
+    print("Congratulations! You have completed your", challenge_name, "!")
+    print(f"Your final score is: {user_data[user_id]['score']} points")
+    print(f"Your final progress was: 100% ")
+
+def view_score(user_id):
+    print(f"Your current score is: {user_data[user_id].get('score', 0)} points")
+
+def view_diet(user_id):
+    bmi = user_data[user_id]['bmi']
+    name = user_data[user_id]['name'] # Fixed typo here
+
+    if bmi < 18.5:
+        print("Here is your personalized diet.")
+        print("""GUIDELINES :
+                                        Meals: 3 main meals + 2–3 snacks
+                                        Calories: Aim for a 500–700 calorie surplus daily
+                                        Macronutrients: High in protein, moderate carbs, healthy fats
+                                        Hydration: Stay hydrated, but avoid water just before meals""")
+
+        print("""
+                                        ----------Sample Diet Plan (With Variations)--------------
+
+                                                Breakfast (9:00 – 10:00 AM):
+                                        Option 1: Oats porridge with milk, nuts, and raisins + boiled egg
+                                        Option 2: Paratha with curd + fruit juice (not from concentrate)
+                                        Option 3: Idli/dosa with sambhar + boiled peanuts or sprouts
+
+                                                Mid-Morning Snack (11:30 AM):
+                                        Option 1: Mixed dry fruits + banana shake
+                                        Option 2: Greek yogurt + granola + honey
+                                        Option 3: Cheese cubes + fruit (like mango or papaya)
+
+                                                Lunch (1:30 – 2:30 PM):
+                                        Option 1: Brown rice + dal + chicken curry + salad + ghee
+                                        Option 2: Chapati + paneer bhurji + vegetable curry + curd
+                                        Option 3: Quinoa + rajma + avocado + boiled egg
+
+                                                Evening Snack (4:00 – 5:00 PM):
+                                        Option 1: Milkshake/smoothie (banana, dates, peanut butter)
+                                        Option 2: Boiled eggs or paneer + sweet potato or boiled corn
+                                        Option 3: Chikki or energy bars + buttermilk
+
+                                                Dinner (7:30 – 8:30 PM):
+                                        Option 1: Chapati + chicken/fish + sautéed vegetables
+                                        Option 2: Rice + dal + potato curry + ghee
+                                        Option 3: Pasta with chicken or tofu + soup""")
+
+    elif 18.5 <= bmi <= 24.9:
+        print("Here is your personalized diet.")
+        print("""GUIDELINES:
+                                        Meals: 3 balanced meals + 1–2 light snacks
+                                        Macronutrients: Balanced carbs, lean proteins, healthy fats
+                                        Hydration: 2–3 liters of water daily
+                                        Portions: Controlled to match activity level""")
+
+        print("""
+                                        ----------Sample Diet Plan (With Variations)----------
+
+                                                Morning (6:30 – 8:00 AM):
+                                        Option 1: Warm water + lemon or soaked fenugreek seeds
+                                        Option 2: Herbal tea or green tea
+
+                                                Breakfast (8:00 – 9:00 AM):
+                                        Option 1: Oats with fruits + nuts + milk
+                                        Option 2: Vegetable poha/upma + curd
+                                        Option 3: Smoothie bowl with berries, yogurt, chia seeds, and granola
+                                        Option 4: 2 boiled eggs + whole wheat toast + fruit
+
+                                                Mid-Morning Snack (10:30 – 11:30 AM):
+                                        Option 1: Fresh fruit (apple/orange/guava)
+                                        Option 2: Coconut water + handful of roasted chickpeas
+                                        Option 3: Green tea + few almonds/walnuts
+
+                                                Lunch (1:00 – 2:00 PM):
+                                        Option 1: Brown rice + dal + sabzi + salad + curd
+                                        Option 2: Whole wheat roti + vegetable curry + lentil soup + salad""")
+    else: # bmi >= 25
+        print("Here is your personalized diet.")
+        print("""GUIDELINES:
+                                        Meals: 3 balanced meals + 1–2 light snacks
+                                        Calorie Deficit: 300–500 kcal/day (safe for steady weight loss)
+                                        Macros: High protein, moderate carbs, healthy fats, high fiber
+                                        Hydration: 2.5–3 liters water daily
+                                        Exercise: Combine walking, strength training, or yoga""")
+
+        print("""
+                                        ----------Sample Diet Plan (With Variations)----------
+
+                                                Breakfast (8:00 – 9:00 AM):
+                                        Option 1: Vegetable oats upma + green tea
+                                        Option 2: Moong dal chilla + mint chutney + 1 boiled egg
+                                        Option 3: Greek yogurt + fruit + chia seeds
+                                        Option 4: Smoothie (spinach, banana, flax seeds, unsweetened almond milk)
+
+                                                Mid-Morning Snack (11:00 AM):
+                                        Option 1: 1 fruit (apple, pear, papaya)
+                                        Option 2: Buttermilk or coconut water
+                                        Option 3: Cucumber or carrot sticks with hummus
+
+                                                Lunch (1:00 – 2:00 PM):
+                                        Option 1: 1-2 multigrain rotis + sabzi + dal + salad
+                                        Option 2: Grilled chicken/tofu + quinoa + stir-fried vegetables
+                                        Option 3: Brown rice + rajma/chana + mixed vegetable salad
+                                        Option 4: Millet bowl + mixed veggies + curd
+
+                                                Evening Snack (4:30 – 5:30 PM):
+                                        Option 1: Roasted makhana or chickpeas
+                                        Option 2: Black coffee or green tea + handful of almonds
+                                        Option 3: Boiled egg or roasted paneer cubes
+
+                                                Dinner (7:00 – 8:00 PM):
+                                        Option 1: Soup (lentil/vegetable/chicken) + salad
+                                        Option 2: Grilled paneer/fish + sautéed vegetables
+                                        Option 3: 1 multigrain roti + lauki/tinda/tori sabzi
+                                        Option 4: Moong dal cheela or besan cheela + chutney""")
+
+def load_data_from_excel():
+    """Loads existing user data from an Excel file at the start."""
+    global user_data, user_count
+    try:
+        df = pd.read_excel("fitness_challenge_data.xlsx", index_col='Sr. No.')
+        # Convert DataFrame back to dictionary format suitable for user_data
+        for index, row in df.iterrows():
+            user_id = int(index) # Ensure user_id is integer
+            user_data[user_id] = row.to_dict()
+            # Convert string representations of lists back to actual lists
+            if isinstance(user_data[user_id].get('custom_tasks'), str):
+                user_data[user_id]['custom_tasks'] = eval(user_data[user_id]['custom_tasks'])
+            else:
+                 user_data[user_id]['custom_tasks'] = [] # Initialize if missing
+
+            if isinstance(user_data[user_id].get('activities'), str):
+                user_data[user_id]['activities'] = user_data[user_id]['activities'].split('\n')
+            else:
+                user_data[user_id]['activities'] = [] # Initialize if missing
+
+        user_count = max(user_data.keys()) if user_data else 0
+        print("Loaded previous data from fitness_challenge_data.xlsx")
+    except FileNotFoundError:
+        print("No existing data file found. Starting fresh.")
+    except Exception as e:
+        print(f"An error occurred while loading data from Excel: {e}")
+
+def save_data_to_excel():
+    """Saves the user data to an Excel file using pandas."""
+    try:
+        df = pd.DataFrame.from_dict(user_data, orient='index')
+        # Rename the index to 'Sr. No.'
+        df.index.name = 'Sr. No.'
+        # Reset the index to make 'Sr. No.' a regular column
+        df.reset_index(inplace=True)
+        
+        # Ensure all expected columns exist before reordering, fill missing with empty string/list
+        expected_columns = ['Sr. No.', 'name', 'weight', 'height', 'bmi', 'score', 'current_progress', 'custom_challenge', 'custom_tasks', 'activities']
+        for col in expected_columns:
+            if col not in df.columns:
+                df[col] = '' if col not in ['custom_tasks', 'activities'] else [[] for _ in range(len(df))]
+
+        df = df[expected_columns]
+
+        # Convert lists in 'custom_tasks' and 'activities' to strings for Excel
+        df['custom_tasks'] = df['custom_tasks'].apply(lambda x: str(x) if isinstance(x, list) else x)
+        df['activities'] = df['activities'].apply(lambda x: '\n'.join(x) if isinstance(x, list) else x)
+        
+        df.to_excel("fitness_challenge_data.xlsx", index=False)
+        print("Data saved to fitness_challenge_data.xlsx")
+    except Exception as e:
+        print(f"An error occurred while saving data to Excel: {e}")
+
+def main():
+    global user_data
+    global user_count
+
+    load_data_from_excel() # Load data at the start
+
+    print("                      Hello!")
+    print("                Welcome to the Fitness Challenge App!")
+
+    name = input("Enter your Name: ")
+    try:
+        height = float(input("Enter your height (in meters): "))
+        weight = float(input("Enter your weight (in kilograms): "))
+        bmi = calculate_bmi(height, weight)
+        print(f"Your BMI is: {bmi:.2f}")
+
+        # Check if user already exists (e.g., by name or if there's a unique identifier)
+        # For simplicity, we'll assign a new ID each time for now,
+        # but in a real app, you'd want a proper user login/lookup.
+        user_count += 1
+        user_id = user_count
+        user_data[user_id] = {
+            'name': name,
+            'height': height,
+            'weight': weight,
+            'bmi': bmi,
+            'score': 0,
+            'current_progress': 0,
+            'activities': [],
+            'custom_challenge': '',
+            'custom_tasks': []
+        }
+
+    except ValueError:
+        print("Invalid input for height or weight. Please enter numeric values.")
+        return
+
+    continue_program = True
+    while continue_program:
+        print("\nWhat would you like to do?")
+        print("1. Follow our plan")
+        print("2. Create your own plan")
+        print("3. View your score")
+        print("4. View your diet")
+        print("5. Exit")
+        choice = input("Enter your choice (1-5): ")
+        match choice:
+            case '1':
+                follow_plan(user_id)
+            case '2':
+                create_own_plan(user_id)
+            case '3':
+                view_score(user_id)
+            case '4':
+                view_diet(user_id)
+            case '5':
+                print("Thank you for using the Fitness Challenge App!")
+                continue_program = False
+            case _:
+                print("Invalid choice. Please enter a number from 1 to 5.")
+
+        if continue_program and choice != '5': # Only ask to continue if not exiting
+            another_action = input("Do you want to continue? (yes/no): ").lower()
+            if another_action != 'yes':
+                print("Thank you for using the Fitness Challenge App!")
+                continue_program = False
+
+    save_data_to_excel()
+
+if _name_ == "_main_":
+    main()
